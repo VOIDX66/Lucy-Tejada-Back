@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProgramsModule } from './programs/programs.module';
@@ -14,18 +15,34 @@ import { AppService } from './app.service';
 
 @Module({
   imports: [
+    // ============================================
+    // 🌍 CARGA GLOBAL DE VARIABLES DE ENTORNO
+    // ============================================
     ConfigModule.forRoot({ isGlobal: true }),
+
+    // ============================================
+    // CONEXIÓN TYPEORM CON SUPABASE (PostgreSQL)
+    // ============================================
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
+      // Usa la URL completa si está disponible (.env)
+      url: process.env.SUPABASE_DB_URL,
+      host: process.env.DB_HOST, // solo si no usas URL
       port: parseInt(process.env.DB_PORT ?? '5432', 10),
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
       autoLoadEntities: true,
-      ssl: { rejectUnauthorized: false },
-      synchronize: false, // Solo para desarrollo
+
+      ssl: { rejectUnauthorized: false }, // Requerido por Supabase
+      synchronize: false, // Nunca en producción
+      migrationsRun: true, // Aplica migraciones automáticamente
+      migrations: ['dist/migrations/*.js'], // Ruta de migraciones compiladas
     }),
+
+    // ============================================
+    // MÓDULOS DE LA APLICACIÓN
+    // ============================================
     AuthModule,
     UsersModule,
     ProgramsModule,
@@ -34,6 +51,7 @@ import { AppService } from './app.service';
     ReportsModule,
     NotificationsModule,
   ],
+
   controllers: [AppController],
   providers: [AppService],
 })

@@ -101,4 +101,7 @@ export class User {
   })
   @Column({ name: 'last_login', type: 'timestamp', nullable: true })
   lastLogin: Date | null;
+
+  @Column({ name: 'profile_picture', type: 'varchar', nullable: true })
+  profilePicture: string | null;
 }
