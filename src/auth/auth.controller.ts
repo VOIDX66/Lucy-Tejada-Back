@@ -1,4 +1,10 @@
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -12,6 +18,7 @@ import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from 'src/users/dto/createUser.dto';
 import { User } from 'src/users/entities/user.entity';
 import { omitPassword } from 'src/common/utils/omitPassword';
+import type { Request } from 'express';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -42,10 +49,14 @@ export class AuthController {
     },
   })
   async register(
+    @Req() req: Request,
     @Body() createUserDto: CreateUserDto,
   ): Promise<Omit<User, 'passwordHash'>> {
-    const user = await this.authService.register(createUserDto);
-
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ipAddress = Array.isArray(forwardedFor)
+      ? forwardedFor[0]
+      : forwardedFor || req.ip || 'unknown';
+    const user = await this.authService.register(createUserDto, ipAddress);
     return omitPassword(user);
   }
 
@@ -66,7 +77,7 @@ export class AuthController {
         access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
         user: {
           id: 'a52f8cb9-70e7-4b61-b84b-3afc6a43b8a1',
-          email: 'usuario@example.com',
+          email: 'nuevo.usuario@example.com',
           firstName: 'Carlos',
           lastName: 'Mora',
           role: 'EDUCATOR',
@@ -98,7 +109,7 @@ export class AuthController {
       },
     },
   })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Req() req: Request) {
     const user = await this.authService.validateUser(
       loginDto.email,
       loginDto.password,
@@ -107,8 +118,11 @@ export class AuthController {
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
-
-    const token = await this.authService.login(user);
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ipAddress = Array.isArray(forwardedFor)
+      ? forwardedFor[0]
+      : forwardedFor || req.ip || 'unknown';
+    const token = await this.authService.login(user, ipAddress);
 
     return {
       access_token: token.access_token,

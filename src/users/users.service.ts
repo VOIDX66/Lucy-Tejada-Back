@@ -3,6 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/createUser.dto';
+import { UpdateUserDto } from './dto/updateUser.dto';
+import { AuditLogsService } from 'src/audit_logs/audit_logs.service';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -11,6 +14,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly auditService: AuditLogsService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -44,7 +48,36 @@ export class UsersService {
     return user ?? null;
   }
 
-  async updateLastLogin(id: string): Promise<void> {
-    await this.usersRepository.update(id, { lastLogin: new Date() });
+  async updateLastLogin(User: User): Promise<void> {
+    await this.usersRepository.update(User.id, { lastLogin: new Date() });
+  }
+
+  async updateProfile(
+    userId: string,
+    currentUserId: string,
+    dto: UpdateUserDto,
+    ipAddress: string,
+  ) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    // Si el usuario no es admin y trata de editar otro perfil
+    if (userId !== currentUserId)
+      throw new ForbiddenException('No autorizado para editar este perfil');
+    console.log(userId, currentUserId);
+
+    const updatedUser = this.usersRepository.merge(user, dto);
+    await this.usersRepository.save(updatedUser);
+
+    // Registro de auditoría
+    await this.auditService.logAction({
+      userId: currentUserId,
+      action: 'UPDATE_USER',
+      entity: 'Users',
+      ipAddress,
+      result: 'Datos del usuario actualizado',
+    });
+
+    return { message: 'Datos actualizados correctamente', user: updatedUser };
   }
 }

@@ -12,6 +12,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuditLogsModule } from './audit_logs/audit_logs.module';
 
 @Module({
   imports: [
@@ -36,7 +37,7 @@ import { AppService } from './app.service';
 
       ssl: { rejectUnauthorized: false }, // Requerido por Supabase
       synchronize: false, // Nunca en producción
-      migrationsRun: true, // Aplica migraciones automáticamente
+      migrationsRun: false, // Aplica migraciones automáticamente
       migrations: ['dist/migrations/*.js'], // Ruta de migraciones compiladas
     }),
 
@@ -50,6 +51,7 @@ import { AppService } from './app.service';
     EducatorsModule,
     ReportsModule,
     NotificationsModule,
+    AuditLogsModule,
   ],
 
   controllers: [AppController],
