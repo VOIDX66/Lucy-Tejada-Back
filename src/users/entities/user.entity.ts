@@ -41,7 +41,7 @@ export class User {
     name: 'document_number',
     type: 'varchar',
     unique: true,
-    nullable: true,
+    nullable: false,
   })
   documentNumber: string;
 

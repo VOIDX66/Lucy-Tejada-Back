@@ -3,6 +3,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsString,
+  IsIn,
   MinLength,
   IsOptional,
   MaxLength,
@@ -67,15 +68,15 @@ export class CreateUserDto {
   @MaxLength(10)
   document_type?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: '1045632299',
-    description: 'Número de documento.',
+    description: 'Número de documento',
     maxLength: 30,
   })
-  @IsOptional()
   @IsString()
+  @IsNotEmpty({ message: 'El número de documento es obligatorio.' })
   @MaxLength(30)
-  document_number?: string;
+  document_number: string;
 
   @ApiPropertyOptional({
     example: '+57 3104567890',
@@ -96,4 +97,8 @@ export class CreateUserDto {
   @IsString()
   @MaxLength(255)
   address?: string;
+
+  @IsOptional()
+  @IsIn(['EDUCATOR', 'STUDENT'])
+  role?: string;
 }

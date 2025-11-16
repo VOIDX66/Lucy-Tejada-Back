@@ -13,6 +13,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuditLogsModule } from './audit_logs/audit_logs.module';
+import { AdminModule } from './admin/admin.module';
+import { StudentsModule } from './students/students.module';
+import { SchedulingModule } from './scheduling/scheduling.module';
 
 @Module({
   imports: [
@@ -52,6 +55,9 @@ import { AuditLogsModule } from './audit_logs/audit_logs.module';
     ReportsModule,
     NotificationsModule,
     AuditLogsModule,
+    AdminModule,
+    StudentsModule,
+    SchedulingModule,
   ],
 
   controllers: [AppController],

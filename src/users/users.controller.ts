@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Patch,
-  Param,
-  Body,
-  Req,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Patch, Param, Body, Req, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -14,95 +7,59 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
+
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
-import { JwtService } from '@nestjs/jwt';
+import { CurrentUser } from '../auth/decorators/currentUser.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
+import { JwtPayloadDto } from '../auth/dto/jwtPayload.dto';
 import type { Request } from 'express';
-import { JwtPayloadDto } from 'src/auth/dto/jwtPayload.dto';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly userService: UsersService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly userService: UsersService) {}
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Actualizar datos personales del usuario',
     description:
-      'Permite que un usuario autenticado actualice su propia información personal. Solo los administradores pueden editar a otros usuarios.',
+      'El propio usuario puede modificar sus datos. El administrador puede modificar a cualquiera.',
   })
-  @ApiBearerAuth() // indica que este endpoint requiere token JWT
   @ApiParam({
     name: 'id',
-    description: 'UUID del usuario a modificar',
+    description: 'UUID del usuario que se desea modificar',
     example: '36d6f2c5-6e78-4d53-a51b-7d499738622a',
   })
   @ApiBody({
-    description: 'Datos actualizables del usuario',
     type: UpdateUserDto,
+    description: 'Datos a actualizar',
   })
   @ApiResponse({
     status: 200,
     description: 'Datos actualizados correctamente',
-    schema: {
-      example: {
-        message: 'Datos actualizados correctamente',
-        user: {
-          id: '36d6f2c5-6e78-4d53-a51b-7d499738622a',
-          firstName: 'Juan',
-          lastName: 'Pérez',
-          email: 'juan.perez@example.com',
-          phone: '+57 3104567890',
-          address: 'Cra 10 #15-20, Pereira',
-          role: 'STUDENT',
-          isActive: true,
-          createdAt: '2025-10-23T15:00:00.000Z',
-          lastLogin: '2025-11-01T20:00:00.000Z',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Token no proporcionado o inválido',
   })
   @ApiResponse({
     status: 403,
-    description: 'No autorizado para editar este perfil',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Usuario no encontrado',
+    description: 'Usuario sin permisos para realizar esta acción',
   })
   async updateUser(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
     @Req() req: Request,
+    @CurrentUser() user: JwtPayloadDto,
   ) {
-    // Leer token desde header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Token no proporcionado');
-    }
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string) || req.ip || 'unknown';
 
-    const token = authHeader.split(' ')[1];
-    let decoded: JwtPayloadDto;
-
-    try {
-      decoded = await this.jwtService.verifyAsync<JwtPayloadDto>(token);
-    } catch {
-      throw new UnauthorizedException('Token inválido o expirado');
-    }
-
-    const currentUserId = decoded.sub;
-    const forwardedFor = req.headers['x-forwarded-for'];
-    const ipAddress = Array.isArray(forwardedFor)
-      ? forwardedFor[0]
-      : forwardedFor || req.ip || 'unknown';
-
-    return this.userService.updateProfile(id, currentUserId, dto, ipAddress);
+    return this.userService.updateProfile(
+      id, // usuario a editar
+      user.sub, // usuario autenticado
+      dto,
+      ipAddress,
+      user.role, // rol del usuario autenticado
+    );
   }
 }
