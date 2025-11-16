@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Req,
+  UseGuards,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -12,18 +13,26 @@ import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiUnauthorizedResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from 'src/users/dto/createUser.dto';
 import { User } from 'src/users/entities/user.entity';
 import { omitPassword } from 'src/common/utils/omitPassword';
+import { CurrentUser } from './decorators/currentUser.decorator';
+import { JwtPayloadDto } from './dto/jwtPayload.dto';
 import type { Request } from 'express';
+import { JwtAuthGuard } from './guards/jwtAuth.guard';
+import { AuditLogsService } from 'src/audit_logs/audit_logs.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly auditService: AuditLogsService,
+  ) {}
 
   // ======================================================
   // REGISTRO DE USUARIO
@@ -128,5 +137,30 @@ export class AuthController {
       access_token: token.access_token,
       user: omitPassword(user),
     };
+  }
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Cerrar sesión del usuario',
+    description: 'Permite al usuario autenticado cerrar su sesión.',
+  })
+  @ApiResponse({ status: 200, description: 'Sesión cerrada correctamente' })
+  @ApiResponse({ status: 401, description: 'Usuario no autenticado' })
+  async logout(@Req() req: Request, @CurrentUser() user: JwtPayloadDto) {
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string) || req.ip || 'unknown';
+
+    // Auditoría
+    await this.auditService.logAction({
+      userId: user.sub,
+      action: 'LOGOUT',
+      entity: 'Auth',
+      ipAddress,
+      result: 'Usuario cerró sesión',
+    });
+
+    // JWT stateless: indicamos al cliente que borre su token
+    return { message: 'Sesión cerrada correctamente' };
   }
 }

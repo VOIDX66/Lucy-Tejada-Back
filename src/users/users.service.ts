@@ -42,7 +42,7 @@ export class UsersService {
       documentNumber: createUserDto.document_number,
       phone: createUserDto.phone,
       address: createUserDto.address,
-      role: UserRole.STUDENT,
+      role: createUserDto.role ?? UserRole.STUDENT,
     });
 
     try {
