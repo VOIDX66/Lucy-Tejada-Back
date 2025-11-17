@@ -1,7 +1,3 @@
-Perfecto, entonces eliminamos la sección de migraciones y ajustamos el README para que quede enfocado únicamente en **uso con la base de datos existente en Supabase**. Te propongo esta versión lista para pegar:
-
----
-
 # **Lucy Tejada Cultural Center - Backend**
 
 Este repositorio contiene el **backend** de la plataforma de gestión del Lucy Tejada Cultural Center, desarrollado con **NestJS**, **TypeORM** y **PostgreSQL (Supabase)**.
