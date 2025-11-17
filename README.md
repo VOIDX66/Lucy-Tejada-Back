@@ -1,35 +1,35 @@
-# Plataforma Lucy Tejada - Centro Cultural
+Perfecto, entonces eliminamos la sección de migraciones y ajustamos el README para que quede enfocado únicamente en **uso con la base de datos existente en Supabase**. Te propongo esta versión lista para pegar:
 
-## Descripción
+---
 
-La Plataforma Lucy Tejada es una aplicación web integral diseñada para modernizar y automatizar la gestión administrativa y académica del Centro Cultural Lucy Tejada en Pereira, Colombia. Permite gestionar estudiantes, educadores, programas formativos, reportes y dashboards de manera eficiente y segura.
+# **Lucy Tejada Cultural Center - Backend**
 
-## Características principales
+Este repositorio contiene el **backend** de la plataforma de gestión del Lucy Tejada Cultural Center, desarrollado con **NestJS**, **TypeORM** y **PostgreSQL (Supabase)**.
 
-* Gestión de estudiantes: registro, actualización de datos, inscripción a programas.
-* Gestión de educadores: asignación de grupos, registro de asistencia, evaluación cualitativa.
-* Gestión administrativa: filtros avanzados, reportes exportables, dashboards interactivos.
-* Seguridad: autenticación segura, roles y permisos, trazabilidad completa.
-* Notificaciones automáticas y segmentadas.
-* Exportación de datos en formatos estándar (Excel, CSV, PDF).
-* Cumple estándares de accesibilidad web (WCAG 2.1).
+El sistema maneja:
 
-## Tecnologías utilizadas
+* Gestión de **usuarios** (Admins, Educadores, Estudiantes)
+* CRUD de **Programas**
+* CRUD de **Grupos** con relación a Programas y Educadores
+* Gestión de **Aulas** (Classrooms)
+* Horarios de clases (**GroupSchedules**)
+* Auditoría de acciones mediante **Audit Logs**
 
-* **Backend:** NestJS, TypeORM, PostgreSQL/Supabase
-* **Frontend:** React (con Vite)
-* **Autenticación:** JWT, bcrypt
-* **Notificaciones y almacenamiento:** servicios personalizados (MailService, FileStorageService)
-* **Testing:** Jest para backend, tests automatizados para funcionalidades críticas
+---
 
-## Requisitos
+## **Tecnologías**
 
-* Node.js >= 20
-* npm >= 9
-* PostgreSQL o Supabase
-* Yarn opcional para el frontend
+* Node.js 20+
+* NestJS 10+
+* TypeScript
+* PostgreSQL / Supabase
+* TypeORM
+* Swagger para documentación de API
+* Jest para pruebas unitarias
 
-## Instalación
+---
+
+## **Instalación**
 
 1. Clonar el repositorio:
 
@@ -44,84 +44,98 @@ cd Lucy-Tejada-Back
 npm install
 ```
 
-3. Configurar variables de entorno (`.env`) con tu conexión a la base de datos, JWT secret y claves de servicios externos.
+3. Configurar variables de entorno (crear `.env` basado en `.env.example`):
 
-4. Crear la base de datos (Postgres/Supabase).
-
-5. Ejecutar migraciones:
-
-```bash
-npm run migration:run
+```env
+DATABASE_URL=postgres://user:password@db.supabase.co:5432/lucy_tejada
+JWT_SECRET=supersecret
+PORT=3000
 ```
 
-> ⚠️ **Nota:** Para este proyecto, las migraciones generadas automáticamente deben **editarse manualmente** antes de ejecutarlas para evitar errores y cambios innecesarios.
+> La base de datos ya está creada en Supabase, no es necesario correr migraciones.
 
-## Uso
+---
 
-* Levantar backend:
+## **Estructura del proyecto**
+
+```text
+src/
+├─ app.module.ts
+├─ users/
+├─ educators/
+├─ students/
+├─ programs/
+├─ groups/
+├─ classrooms/
+├─ scheduling/
+├─ audit_logs/
+```
+
+* **users/**: gestión de usuarios y roles
+* **educators/**: CRUD de educadores
+* **students/**: gestión de estudiantes
+* **programs/**: CRUD de programas con auditoría
+* **groups/**: CRUD de grupos y relaciones
+* **classrooms/**: gestión de aulas
+* **scheduling/**: gestión de horarios de clases
+* **audit_logs/**: registro de acciones importantes del sistema
+
+---
+
+## **Uso**
+
+Levantar el servidor en modo desarrollo:
 
 ```bash
 npm run start:dev
 ```
 
-* Levantar frontend (desde la carpeta del frontend):
+* Servidor disponible en: `http://localhost:3000`
+* Documentación Swagger en: `http://localhost:3000/docs`
 
-```bash
-npm run dev
-```
+---
 
-* Acceder a la aplicación en `http://localhost:5173` (frontend) y API en `http://localhost:3000`.
+## **Pruebas**
 
-## Estructura del proyecto
-
-```
-src/
- ├─ auth/               # Módulo de autenticación
- ├─ users/              # Gestión de usuarios
- ├─ enrollments/        # Gestión de inscripciones
- ├─ programs/           # Gestión de programas formativos
- ├─ migrations/         # Migraciones (editar manualmente)
- ├─ common/             # Servicios y utilidades comunes
- └─ main.ts             # Entry point
-```
-
-## Buenas prácticas de migraciones
-
-1. Generar migración base con:
-
-```bash
-npm run migration:generate nombre-migracion
-```
-
-2. Editar **manualmente** la migración para:
-
-   * Quitar cambios no deseados.
-   * Ajustar columnas `NOT NULL` y defaults.
-   * Formatear para ESLint/Prettier.
-
-3. Ejecutar migración:
-
-```bash
-npm run migration:run
-```
-
-4. Si hay que revertir:
-
-```bash
-npm run migration:revert
-```
-
-## Testing
-
-* Backend: Jest
+Ejecutar pruebas unitarias:
 
 ```bash
 npm run test
 ```
 
-* Frontend: React Testing Library / vitest (según configuración)
+---
 
-## Licencia
+## **Auditoría**
 
-* Proyecto académico desarrollado en la Universidad Tecnológica de Pereira.
-* Uso limitado a fines educativos y de evaluación de la materia/proyecto.
+Todas las acciones críticas (crear, actualizar, eliminar programas, grupos, usuarios, etc.) quedan registradas en la tabla `audit_logs`.
+
+Campos principales:
+
+| Campo      | Descripción                                           |
+| ---------- | ----------------------------------------------------- |
+| user_id    | Usuario que realiza la acción                         |
+| action     | Tipo de acción (CREATE_PROGRAM, UPDATE_PROGRAM, etc.) |
+| entity     | Entidad afectada (Program, Group, Educator)           |
+| ip_address | IP desde la cual se realizó la acción                 |
+| result     | Resultado / mensaje de la acción                      |
+
+---
+
+## **Endpoints principales**
+
+* `/users` → CRUD de usuarios
+* `/educators` → CRUD de educadores
+* `/students` → CRUD de estudiantes
+* `/programs` → CRUD de programas (solo ADMIN)
+* `/groups` → CRUD de grupos (solo ADMIN)
+* `/classrooms` → CRUD de aulas (solo ADMIN)
+* `/schedules` → Gestión de horarios de grupos
+* `/docs` → Documentación Swagger
+
+> Todos los endpoints protegidos con **JWT Guard** y roles según secciones.
+
+---
+
+## **Licencia**
+
+Este proyecto es **propiedad del Lucy Tejada Cultural Center**. Uso interno y educativo.
