@@ -1,3 +1,11 @@
+# simulate_server.py
+"""
+Simulador de horarios (versión A)
+Se preserva la estructura original y se añade afinidad horaria por grupo:
+si un grupo tiene clase un día a una franja, se preferirá esa misma franja
+en sus otras clases semanales cuando sea posible.
+"""
+
 import random
 import uuid
 from collections import defaultdict, deque
@@ -12,7 +20,7 @@ import uvicorn
 # =============================
 NUM_ESTUDIANTES = 100
 MAX_ESTUDIANTES_POR_GRUPO = 20
-CLASES_POR_SEMANA = 4
+CLASES_POR_SEMANA = 2
 
 # límites para evitar saturación diaria (aplicados por docente y por grupo)
 MAX_HORAS_POR_DIA_POR_DOCENTE = 4
@@ -74,8 +82,8 @@ MAPA_AULAS = {
 }
 
 DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
-HORARIOS = [("08:00", "10:00"), ("10:00", "12:00"), ("12:00", "14:00"),
-            ("14:00", "16:00"), ("16:00", "18:00")]
+HORARIOS = [("08:00", "10:00"), ("10:00", "12:00"), ("13:00", "15:00"),
+            ("15:00", "17:00"), ("17:00", "18:00")]
 
 # =============================
 # INICIALIZAR APP
@@ -148,26 +156,55 @@ def asignar_estudiantes_a_grupos(estudiantes, grupos):
             est["grupo"] = "SIN GRUPO"
 
 # =============================
-# SCORING CANDIDATO
+# SCORING CANDIDATO (ACTUALIZADO)
 # =============================
-def score_candidato(c, uso_docente_por_dia, uso_grupo_por_dia, prioridad_aula_tipo):
+def score_candidato(c, uso_docente_por_dia, uso_grupo_por_dia, prioridad_aula_tipo, horarios_existentes_grupo):
     """
     Menor score = mejor candidato.
     Penalizaciones:
       - Aula GENERAL más penalizada (si prioridad_aula_tipo es True favorece aula específica)
       - Docente con más horas ese día penaliza
       - Grupo con más horas ese día penaliza
-      - Preferencia por aula según prioridad_aula_tipo: si aula.type == preferido => -1
+    Además se incluye afinidad horaria con horarios_existentes_grupo:
+      - si el candidato usa la misma franja que ya tiene el grupo -> gran bonificación
+      - si es horario cercano -> pequeña penalización en proporción a la distancia (índice)
     """
     score = 0
     if c["aula_type"] == "GENERAL":
         score += 3
+
     # docente y grupo load penalty
     score += uso_docente_por_dia[c["docente"]][c["dia"]] * 2
     score += uso_grupo_por_dia[c["grupo"]][c["dia"]] * 2
+
+    # Afinidad horaria: favorece repetir la MISMA franja para el grupo
+    if horarios_existentes_grupo:
+        # construir lista de tuplas de horas previas
+        horas_previas = [(h["hora_inicio"], h["hora_fin"]) for h in horarios_existentes_grupo]
+
+        # candidato.hora es una tupla (inicio, fin)
+        if c["hora"] in horas_previas:
+            score -= 5  # fuerte incentivo para repetir exactamente la franja
+        else:
+            # medir distancia mínima en índices de HORARIOS
+            try:
+                idx_actual = HORARIOS.index(c["hora"])
+                distancias = []
+                for h in horas_previas:
+                    idx_prev = HORARIOS.index(h)
+                    distancias.append(abs(idx_actual - idx_prev))
+                if distancias:
+                    dist_min = min(distancias)
+                    # penalización proporcional a la distancia (1 → pequeña, 2+ → mayor)
+                    score += dist_min * 0.8
+            except ValueError:
+                # si por alguna razón no encuentra el horario en HORARIOS (defensivo)
+                score += 1
+
     # if the aula type is preferred reduce score slightly
     if prioridad_aula_tipo and c.get("preferred", False):
         score -= 1
+
     # small randomness to break ties deterministically but varied
     score += random.random() * 0.1
     return score
@@ -216,7 +253,7 @@ def asignar_horarios_final(grupos):
                             continue
                         if uso_docente_por_dia[g["educador"]][dia] >= MAX_HORAS_POR_DIA_POR_DOCENTE:
                             continue
-                        # build candidate
+                        # build candidate (note: incluye 'hora' tuple for affinity check)
                         cand = {
                             "dia": dia,
                             "hora": hora,
@@ -233,8 +270,16 @@ def asignar_horarios_final(grupos):
                 # lo dejamos para la siguiente ronda; si al final ninguna ronda lo asigna quedará PARCIAL
                 continue
 
-            # escoger mejor candidato por score
-            candidatos.sort(key=lambda c: score_candidato(c, uso_docente_por_dia, uso_grupo_por_dia, prioridad_aula_tipo=True))
+            # escoger mejor candidato por score (IMPORTANTE: pasamos los horarios existentes del grupo)
+            candidatos.sort(
+                key=lambda c: score_candidato(
+                    c,
+                    uso_docente_por_dia,
+                    uso_grupo_por_dia,
+                    prioridad_aula_tipo=True,
+                    horarios_existentes_grupo=g["horarios"]
+                )
+            )
             candidato_mejor = candidatos[0]
 
             # asignar
@@ -277,7 +322,7 @@ def ver_horarios(request: Request):
     grupos = crear_grupos()
     asignar_estudiantes_a_grupos(estudiantes, grupos)
 
-    # asignación usando algoritmo por rondas (justo)
+    # asignación usando algoritmo por rondas (justo) con afinidad horaria incluida
     asignar_horarios_final(grupos)
 
     tablas_debug = {g["name"]: generar_tabla_horario(g) for g in grupos}
