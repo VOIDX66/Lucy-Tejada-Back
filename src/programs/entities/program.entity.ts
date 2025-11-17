@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Group } from 'src/groups/entities/group.entity';
+import { Group } from '../../groups/entities/group.entity';
+import { EducatorProgram } from '../../educator_programs/entities/educatorProgram.entity';
 
 export enum ProgramStatus {
   ACTIVE = 'ACTIVE',
@@ -70,4 +71,7 @@ export class Program {
 
   @OneToMany(() => Group, (group) => group.program)
   groups: Group[];
+
+  @OneToMany(() => EducatorProgram, (ep) => ep.program)
+  educatorPrograms: EducatorProgram[];
 }

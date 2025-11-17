@@ -3,6 +3,7 @@ import { UsersService } from 'src/users/users.service';
 import { EducatorsService } from 'src/educators/educators.service';
 import { CreateEducatorDto } from './dto/createEducator.dto';
 import { AuditLogsService } from 'src/audit_logs/audit_logs.service';
+import { EducatorProgramsService } from 'src/educator_programs/educator_programs.service';
 
 @Injectable()
 export class AdminService {
@@ -10,6 +11,7 @@ export class AdminService {
     private readonly usersService: UsersService,
     private readonly educatorsService: EducatorsService,
     private readonly auditService: AuditLogsService,
+    private readonly educatorProgramsService: EducatorProgramsService,
   ) {}
 
   async createEducator(
@@ -36,9 +38,26 @@ export class AdminService {
       dto.description,
     );
 
-    // 3. Registrar auditoría
+    // 3. Asignar programas si vienen en el DTO
+    if (dto.program_ids?.length) {
+      await this.educatorProgramsService.assignEducatorToPrograms(
+        user.id,
+        dto.program_ids,
+      );
+
+      // Audit log de asignación
+      await this.auditService.logAction({
+        userId: adminId,
+        action: 'ASSIGN_EDUCATOR_TO_PROGRAMS',
+        entity: 'EducatorPrograms',
+        ipAddress,
+        result: `Educador ${user.id} asignado a programas: ${dto.program_ids.join(', ')}`,
+      });
+    }
+
+    // 4. Audit log principal de creación del docente
     await this.auditService.logAction({
-      userId: adminId, // quien creó al profesor
+      userId: adminId,
       action: 'CREATE_EDUCATOR',
       entity: 'Users/Educator',
       ipAddress,

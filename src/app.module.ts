@@ -18,6 +18,7 @@ import { StudentsModule } from './students/students.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { ClassroomsModule } from './classrooms/classrooms.module';
 import { GroupsModule } from './groups/groups.module';
+import { EducatorProgramsModule } from './educator_programs/educator_programs.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { GroupsModule } from './groups/groups.module';
     SchedulingModule,
     ClassroomsModule,
     GroupsModule,
+    EducatorProgramsModule,
   ],
 
   controllers: [AppController],

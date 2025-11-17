@@ -1,16 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-export class Seed17633215815531763321580 implements MigrationInterface {
-  name = 'Seed17633215815531763321580';
+export class SeedInitial1716332158155 implements MigrationInterface {
+  name = 'SeedInitial1716332158155';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Hash único para todos los usuarios de prueba
     const password = await bcrypt.hash('12345678', 10);
 
     /* ===============================
-           PROGRAMAS
-        =============================== */
+            PROGRAMAS
+    =============================== */
     await queryRunner.query(`
       INSERT INTO programs (id, name, description, capacity, status)
       VALUES
@@ -24,8 +23,8 @@ export class Seed17633215815531763321580 implements MigrationInterface {
     `);
 
     /* ===============================
-           SALONES
-        =============================== */
+            SALONES
+    =============================== */
     await queryRunner.query(`
       INSERT INTO classrooms (id, name, type, capacity, location)
       VALUES
@@ -37,8 +36,8 @@ export class Seed17633215815531763321580 implements MigrationInterface {
     `);
 
     /* ===============================
-           EDUCADORES
-        =============================== */
+            USERS → EDUCADORES
+    =============================== */
     await queryRunner.query(`
       INSERT INTO users (id, first_name, last_name, email, role, password_hash)
       VALUES
@@ -65,8 +64,8 @@ export class Seed17633215815531763321580 implements MigrationInterface {
     `);
 
     /* ===============================
-           ESTUDIANTES
-        =============================== */
+            USERS → ESTUDIANTES
+    =============================== */
     await queryRunner.query(`
       INSERT INTO users (id, first_name, last_name, email, role, password_hash)
       VALUES
@@ -92,8 +91,8 @@ export class Seed17633215815531763321580 implements MigrationInterface {
     `);
 
     /* ===============================
-           GRUPOS
-        =============================== */
+            GRUPOS
+    =============================== */
     await queryRunner.query(`
       INSERT INTO groups (id, group_name, program_id, educator_id)
       SELECT gen_random_uuid(), 'Danza Inicial 1', p.id, e.id
@@ -119,8 +118,8 @@ export class Seed17633215815531763321580 implements MigrationInterface {
     `);
 
     /* ===============================
-           HORARIOS
-        =============================== */
+            HORARIOS
+    =============================== */
     await queryRunner.query(`
       INSERT INTO group_schedules (group_id, day_of_week, start_time, end_time, classroom_id)
       SELECT g.id, 'Lunes', '10:00', '12:00', c.id
@@ -146,116 +145,73 @@ export class Seed17633215815531763321580 implements MigrationInterface {
     `);
   }
 
-  /* ====================================================================================
-      DOWN SEGURO — ELIMINA ÚNICAMENTE LO CREADO POR ESTA MIGRACIÓN
-     ==================================================================================== */
+  /* ===============================
+            DOWN
+  =============================== */
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // HORARIOS
     await queryRunner.query(`
       DELETE FROM group_schedules
       WHERE group_id IN (
         SELECT id FROM groups
-        WHERE group_name IN (
-          'Danza Inicial 1',
-          'Actuación Básica',
-          'Coros Juvenil'
-        )
+        WHERE group_name IN ('Danza Inicial 1','Actuación Básica','Coros Juvenil')
       );
     `);
 
-    // INSCRIPCIONES (por si algún test generó enrollments)
     await queryRunner.query(`
       DELETE FROM enrollments
       WHERE group_id IN (
         SELECT id FROM groups
-        WHERE group_name IN (
-          'Danza Inicial 1',
-          'Actuación Básica',
-          'Coros Juvenil'
-        )
+        WHERE group_name IN ('Danza Inicial 1','Actuación Básica','Coros Juvenil')
       );
     `);
 
-    // GRUPOS
     await queryRunner.query(`
       DELETE FROM groups
-      WHERE group_name IN (
-        'Danza Inicial 1',
-        'Actuación Básica',
-        'Coros Juvenil'
-      );
+      WHERE group_name IN ('Danza Inicial 1','Actuación Básica','Coros Juvenil');
     `);
 
-    // ESTUDIANTES
     await queryRunner.query(`
       DELETE FROM students
       WHERE id IN (
-        SELECT id FROM users
-        WHERE email IN (
-          'ana.perez@example.com',
-          'valeria.ruiz@example.com',
-          'carlos.gomez@example.com',
-          'mateo.rios@example.com',
-          'sebastian.ochoa@example.com'
+        SELECT id FROM users WHERE email IN (
+          'ana.perez@example.com','valeria.ruiz@example.com',
+          'carlos.gomez@example.com','mateo.rios@example.com','sebastian.ochoa@example.com'
         )
       );
     `);
 
-    // EDUCADORES
     await queryRunner.query(`
       DELETE FROM educators
       WHERE id IN (
-        SELECT id FROM users
-        WHERE email IN (
-          'maria.lopez@lucy.com',
-          'juan.ramirez@lucy.com',
-          'laura.gomez@lucy.com',
-          'andres.munoz@lucy.com',
-          'paula.restrepo@lucy.com'
+        SELECT id FROM users WHERE email IN (
+          'maria.lopez@lucy.com','juan.ramirez@lucy.com',
+          'laura.gomez@lucy.com','andres.munoz@lucy.com','paula.restrepo@lucy.com'
         )
       );
     `);
 
-    // USERS
     await queryRunner.query(`
       DELETE FROM users
       WHERE email IN (
-        'maria.lopez@lucy.com',
-        'juan.ramirez@lucy.com',
-        'laura.gomez@lucy.com',
-        'andres.munoz@lucy.com',
-        'paula.restrepo@lucy.com',
-        'ana.perez@example.com',
-        'valeria.ruiz@example.com',
-        'carlos.gomez@example.com',
-        'mateo.rios@example.com',
-        'sebastian.ochoa@example.com'
+        'maria.lopez@lucy.com','juan.ramirez@lucy.com','laura.gomez@lucy.com',
+        'andres.munoz@lucy.com','paula.restrepo@lucy.com',
+        'ana.perez@example.com','valeria.ruiz@example.com',
+        'carlos.gomez@example.com','mateo.rios@example.com','sebastian.ochoa@example.com'
       );
     `);
 
-    // SALONES
     await queryRunner.query(`
       DELETE FROM classrooms
       WHERE name IN (
-        'Aula Danza 1',
-        'Aula Música 1',
-        'Teatrino',
-        'Sala Artes 1',
-        'Aula Multifuncional'
+        'Aula Danza 1','Aula Música 1','Teatrino','Sala Artes 1','Aula Multifuncional'
       );
     `);
 
-    // PROGRAMAS
     await queryRunner.query(`
       DELETE FROM programs
       WHERE name IN (
-        'Danza',
-        'Teatro',
-        'Coros',
-        'Cuerdas Pulsadas',
-        'Cuerdas Sinfónicas',
-        'Banda Músico Marcial',
-        'Artes Visuales'
+        'Danza','Teatro','Coros','Cuerdas Pulsadas','Cuerdas Sinfónicas',
+        'Banda Músico Marcial','Artes Visuales'
       );
     `);
   }

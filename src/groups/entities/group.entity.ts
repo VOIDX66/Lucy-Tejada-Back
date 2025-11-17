@@ -7,9 +7,9 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Program } from 'src/programs/entities/program.entity';
-import { Educator } from 'src/educators/entities/educator.entity';
-import { GroupSchedule } from 'src/scheduling/entites/groupSchedule.entity';
+import { Program } from '../../programs/entities/program.entity';
+import { Educator } from '../../educators/entities/educator.entity';
+import { GroupSchedule } from '../../scheduling/entites/groupSchedule.entity';
 
 @Entity('groups')
 export class Group {

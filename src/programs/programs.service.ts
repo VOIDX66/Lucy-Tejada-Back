@@ -6,6 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Program } from './entities/program.entity';
+import { Educator } from '../educators/entities/educator.entity';
+import { EducatorProgram } from '../educator_programs/entities/educatorProgram.entity';
 import { CreateProgramDto } from './dto/createProgram.dto';
 import { UpdateProgramDto } from './dto/updateProgram.dto';
 import { AuditLogsService } from 'src/audit_logs/audit_logs.service';
@@ -82,6 +84,138 @@ export class ProgramsService {
       throw new NotFoundException('Programa no encontrado.');
     }
     return p;
+  }
+
+  // ---------------------------------------------------------
+  //  ASSIGN EDUCATOR TO PROGRAM
+  // ---------------------------------------------------------
+  async assignEducatorToProgram(
+    programId: string,
+    educatorId: string,
+    adminId?: string,
+    ipAddress?: string,
+  ) {
+    const program = await this.repo.findOne({ where: { id: programId } });
+    if (!program) throw new NotFoundException('Programa no encontrado.');
+
+    const educator = await this.repo.manager.findOne(Educator, {
+      where: { id: educatorId },
+      relations: ['user'],
+    });
+    if (!educator) throw new NotFoundException('Profesor no encontrado.');
+
+    const existing = await this.repo.manager.findOne(EducatorProgram, {
+      where: { program_id: programId, educator_id: educatorId },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        'Este profesor ya está asignado a este programa.',
+      );
+    }
+
+    const relation = this.repo.manager.create(EducatorProgram, {
+      program_id: programId,
+      educator_id: educatorId,
+    });
+    await this.repo.manager.save(relation);
+
+    // Audit log
+    if (adminId && ipAddress) {
+      await this.auditService.logAction({
+        userId: adminId,
+        action: 'ASSIGN_EDUCATOR_TO_PROGRAM',
+        entity: 'EducatorProgram',
+        ipAddress,
+        result: `Educador ${educatorId} asignado al programa ${programId}`,
+      });
+    }
+
+    return {
+      message: 'Profesor asignado al programa correctamente.',
+      program_id: programId,
+      educator: {
+        id: educator.id,
+        name: educator.user.firstName + ' ' + educator.user.lastName,
+        email: educator.user.email,
+        specialization: educator.specialization,
+      },
+    };
+  }
+
+  // ---------------------------------------------------------
+  //  GET EDUCATOR BY PROGRAM
+  // ---------------------------------------------------------
+
+  async getEducatorsByProgram(programId: string) {
+    const program = await this.repo.findOne({
+      where: { id: programId },
+      relations: [
+        'educatorPrograms',
+        'educatorPrograms.educator',
+        'educatorPrograms.educator.user',
+      ],
+    });
+
+    if (!program) {
+      throw new NotFoundException('Programa no encontrado.');
+    }
+
+    const educators = program.educatorPrograms.map((ep) => ({
+      id: ep.educator.id,
+      first_name: ep.educator.user.firstName,
+      last_name: ep.educator.user.lastName,
+      email: ep.educator.user.email,
+      specialization: ep.educator.specialization,
+      description: ep.educator.description,
+      status: ep.educator.status,
+    }));
+
+    return {
+      program_id: program.id,
+      educators,
+    };
+  }
+
+  // ---------------------------------------------------------
+  //  DELETE EDUCATOR FROM ONE PROGRAM
+  // ---------------------------------------------------------
+
+  async removeEducatorFromProgram(
+    programId: string,
+    educatorId: string,
+    adminId?: string,
+    ipAddress?: string,
+  ) {
+    const program = await this.repo.findOne({ where: { id: programId } });
+    if (!program) throw new NotFoundException('Programa no encontrado.');
+
+    const existing = await this.repo.manager.findOne(EducatorProgram, {
+      where: { program_id: programId, educator_id: educatorId },
+    });
+    if (!existing) {
+      throw new NotFoundException(
+        'Este profesor no está asignado a este programa.',
+      );
+    }
+
+    await this.repo.manager.remove(existing);
+
+    // Audit log
+    if (adminId && ipAddress) {
+      await this.auditService.logAction({
+        userId: adminId,
+        action: 'REMOVE_EDUCATOR_FROM_PROGRAM',
+        entity: 'EducatorProgram',
+        ipAddress,
+        result: `Educador ${educatorId} removido del programa ${programId}`,
+      });
+    }
+
+    return {
+      message: 'Profesor removido del programa correctamente.',
+      program_id: programId,
+      educator_id: educatorId,
+    };
   }
 
   // ---------------------------------------------------------

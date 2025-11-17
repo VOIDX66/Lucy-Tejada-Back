@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EducatorsController } from './educators.controller';
 import { EducatorsService } from './educators.service';
 import { Educator } from './entities/educator.entity';
-import { Group } from 'src/groups/entities/group.entity';
+import { Group } from '../groups/entities/group.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Educator, Group])],

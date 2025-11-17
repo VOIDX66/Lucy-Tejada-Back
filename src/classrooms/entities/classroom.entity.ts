@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { GroupSchedule } from 'src/scheduling/entites/groupSchedule.entity';
+import { GroupSchedule } from '../../scheduling/entites/groupSchedule.entity';
 
 export enum ClassroomType {
   DANZA = 'DANZA',

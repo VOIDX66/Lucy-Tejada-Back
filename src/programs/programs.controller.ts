@@ -10,6 +10,7 @@ import {
   UseGuards,
   ForbiddenException,
   HttpCode,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -74,8 +75,69 @@ export class ProgramsController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un programa por ID' })
   @ApiParam({ name: 'id', description: 'UUID del programa' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.programsService.findOne(id);
+  }
+
+  // ---------------------------------------------------------
+  //  ASSIGN EDUCATOR TO PROGRAM
+  // ---------------------------------------------------------
+  @UseGuards(JwtAuthGuard)
+  @Post(':programId/educators/:educatorId')
+  async assignEducatorToProgram(
+    @Param('programId', new ParseUUIDPipe()) programId: string,
+    @Param('educatorId', new ParseUUIDPipe()) educatorId: string,
+    @Req() req: Request,
+    @CurrentUser() user: JwtPayloadDto,
+  ) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'No tienes permisos para asignar educadores a programas',
+      );
+    }
+    const ipAddress = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    return this.programsService.assignEducatorToProgram(
+      programId,
+      educatorId,
+      user.sub,
+      ipAddress as string,
+    );
+  }
+
+  // ---------------------------------------------------------
+  //  GET EDUCATOR BY PROGRAM
+  // ---------------------------------------------------------
+
+  @Get(':id/educators')
+  @ApiOperation({ summary: 'Listar educadores asignados a un programa' })
+  @ApiBearerAuth()
+  getProgramEducators(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.programsService.getEducatorsByProgram(id);
+  }
+
+  // ---------------------------------------------------------
+  //  DELETE EDUCATOR FROM ONE PROGRAM
+  // ---------------------------------------------------------
+  @UseGuards(JwtAuthGuard)
+  @Delete(':programId/educators/:educatorId')
+  async removeEducatorFromProgram(
+    @Param('programId', new ParseUUIDPipe()) programId: string,
+    @Param('educatorId', new ParseUUIDPipe()) educatorId: string,
+    @Req() req: Request,
+    @CurrentUser() user: JwtPayloadDto,
+  ) {
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'No tienes permisos para eliminar educadores de programas',
+      );
+    }
+    const ipAddress = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    return this.programsService.removeEducatorFromProgram(
+      programId,
+      educatorId,
+      user.sub,
+      ipAddress as string,
+    );
   }
 
   // ===========================================

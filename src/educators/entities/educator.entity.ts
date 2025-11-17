@@ -1,6 +1,15 @@
-import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Group } from 'src/groups/entities/group.entity';
+import { Group } from '../../groups/entities/group.entity';
+import { EducatorProgram } from '../../educator_programs/entities/educatorProgram.entity';
+import { User } from '../../users/entities/user.entity';
 
 export enum EducatorStatus {
   ACTIVE = 'ACTIVE',
@@ -48,4 +57,11 @@ export class Educator {
 
   @OneToMany(() => Group, (group) => group.educator)
   groups: Group[];
+
+  @OneToMany(() => EducatorProgram, (ep) => ep.educator)
+  programs: EducatorProgram[];
+
+  @OneToOne(() => User)
+  @JoinColumn({ name: 'id' }) // usamos la columna id como FK
+  user: User;
 }
