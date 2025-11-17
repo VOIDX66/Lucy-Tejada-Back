@@ -26,7 +26,7 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addBearerAuth() // Para autenticación con JWT
-    .setContact('Equipo de Desarrollo', '', 'soporte@lucytejada.gov.co')
+    .setContact('Equipo de Desarrollo', '', 'd.pelaez@utp.edu.co')
     .setLicense('MIT', 'https://opensource.org/licenses/MIT')
     .build();
 
