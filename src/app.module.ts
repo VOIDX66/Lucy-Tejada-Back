@@ -16,6 +16,8 @@ import { AuditLogsModule } from './audit_logs/audit_logs.module';
 import { AdminModule } from './admin/admin.module';
 import { StudentsModule } from './students/students.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
+import { ClassroomsModule } from './classrooms/classrooms.module';
+import { GroupsModule } from './groups/groups.module';
 
 @Module({
   imports: [
@@ -58,6 +60,8 @@ import { SchedulingModule } from './scheduling/scheduling.module';
     AdminModule,
     StudentsModule,
     SchedulingModule,
+    ClassroomsModule,
+    GroupsModule,
   ],
 
   controllers: [AppController],

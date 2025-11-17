@@ -1,5 +1,6 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Group } from 'src/groups/entities/group.entity';
 
 export enum EducatorStatus {
   ACTIVE = 'ACTIVE',
@@ -44,4 +45,7 @@ export class Educator {
   })
   @Column({ type: 'varchar', default: EducatorStatus.ACTIVE })
   status: string;
+
+  @OneToMany(() => Group, (group) => group.educator)
+  groups: Group[];
 }
