@@ -37,6 +37,7 @@ export class AuthController {
   // ======================================================
   // REGISTRO DE USUARIO
   // ======================================================
+
   @Post('register')
   @ApiOperation({
     summary: 'Registro de nuevo usuario',
@@ -72,6 +73,7 @@ export class AuthController {
   // ======================================================
   // LOGIN DE USUARIO
   // ======================================================
+
   @Post('login')
   @ApiOperation({
     summary: 'Inicio de sesión de usuario',

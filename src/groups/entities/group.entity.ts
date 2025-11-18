@@ -10,6 +10,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Program } from '../../programs/entities/program.entity';
 import { Educator } from '../../educators/entities/educator.entity';
 import { GroupSchedule } from '../../scheduling/entites/groupSchedule.entity';
+import { Attendance } from '../../attendances/entities/attendance.entity';
+import { Evaluation } from '../../evaluations/entities/evaluation.entity';
 
 @Entity('groups')
 export class Group {
@@ -64,4 +66,10 @@ export class Group {
 
   @OneToMany(() => GroupSchedule, (schedule) => schedule.group)
   schedules: GroupSchedule[];
+
+  @OneToMany(() => Attendance, (attendance) => attendance.group)
+  attendanceRecords: Attendance[];
+
+  @OneToMany(() => Evaluation, (evaluation) => evaluation.group)
+  evaluations: Evaluation[];
 }

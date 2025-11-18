@@ -18,6 +18,10 @@ export class AuditLogsService {
     private readonly auditRepository: Repository<AuditLog>,
   ) {}
 
+  // ===========================================
+  // CREATE LOG ACTION
+  // ===========================================
+
   async logAction(params: LogActionParams): Promise<void> {
     const log = this.auditRepository.create(params);
     await this.auditRepository.save(log);

@@ -14,6 +14,10 @@ export class AdminService {
     private readonly educatorProgramsService: EducatorProgramsService,
   ) {}
 
+  // ===========================================
+  // CREATE EDUCATOR
+  // ===========================================
+
   async createEducator(
     dto: CreateEducatorDto,
     adminId: string,

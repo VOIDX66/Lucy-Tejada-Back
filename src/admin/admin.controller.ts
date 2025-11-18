@@ -18,6 +18,10 @@ import type { Request } from 'express';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  // ===========================================
+  // CREATE EDUCATOR
+  // ===========================================
+
   @Post('educators')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

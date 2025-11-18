@@ -10,6 +10,10 @@ export class EducatorProgramsService {
     private readonly repo: Repository<EducatorProgram>,
   ) {}
 
+  // ===========================================
+  // ASSIGN EDUCATOR TO PROGRAM
+  // ===========================================
+
   async assignEducatorToProgram(educatorId: string, programId: string) {
     try {
       const relation = this.repo.create({
@@ -25,6 +29,10 @@ export class EducatorProgramsService {
       throw error;
     }
   }
+
+  // ===========================================
+  // ASSIGN EDUCATOR TO MANY PROGRAMS
+  // ===========================================
 
   async assignEducatorToPrograms(educatorId: string, programIds: string[]) {
     const results = [];

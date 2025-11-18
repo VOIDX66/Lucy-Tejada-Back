@@ -10,6 +10,10 @@ export class EducatorsService {
     private readonly educatorRepo: Repository<Educator>,
   ) {}
 
+  // ===========================================
+  // CREATE EDUCATOR
+  // ===========================================
+
   async create(id: string, specialization: string, description?: string) {
     const educator = this.educatorRepo.create({
       id,

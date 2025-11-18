@@ -15,6 +15,10 @@ export class AuthService {
     private auditService: AuditLogsService,
   ) {}
 
+  // ===========================================
+  // VALIDAR USUARIO
+  // ===========================================
+
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
     if (!user) return null;
@@ -25,6 +29,10 @@ export class AuthService {
 
     return user;
   }
+
+  // ===========================================
+  // REGISTER USER
+  // ===========================================
 
   async register(createUserDto: CreateUserDto, ipAddress: string) {
     const user = await this.usersService.create(createUserDto);
@@ -38,6 +46,10 @@ export class AuthService {
     });
     return user;
   }
+
+  // ===========================================
+  // LOGIN USER
+  // ===========================================
 
   async login(user: User, ipAddress: string) {
     const payload: JwtPayloadDto = {

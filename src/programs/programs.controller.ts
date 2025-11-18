@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Get,
-  Put,
   Delete,
   Param,
   Body,
@@ -11,6 +10,7 @@ import {
   ForbiddenException,
   HttpCode,
   ParseUUIDPipe,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -143,7 +143,7 @@ export class ProgramsController {
   // ===========================================
   // UPDATE
   // ===========================================
-  @Put(':id')
+  @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({

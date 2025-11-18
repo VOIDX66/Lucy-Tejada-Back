@@ -19,11 +19,13 @@ import { SchedulingModule } from './scheduling/scheduling.module';
 import { ClassroomsModule } from './classrooms/classrooms.module';
 import { GroupsModule } from './groups/groups.module';
 import { EducatorProgramsModule } from './educator_programs/educator_programs.module';
+import { EvaluationsModule } from './evaluations/evaluations.module';
+import { AttendancesModule } from './attendances/attendances.module';
 
 @Module({
   imports: [
     // ============================================
-    // 🌍 CARGA GLOBAL DE VARIABLES DE ENTORNO
+    // CARGA GLOBAL DE VARIABLES DE ENTORNO
     // ============================================
     ConfigModule.forRoot({ isGlobal: true }),
 
@@ -51,6 +53,7 @@ import { EducatorProgramsModule } from './educator_programs/educator_programs.mo
     // MÓDULOS DE LA APLICACIÓN
     // ============================================
     AuthModule,
+    AttendancesModule,
     UsersModule,
     ProgramsModule,
     EnrollmentsModule,
@@ -64,6 +67,7 @@ import { EducatorProgramsModule } from './educator_programs/educator_programs.mo
     ClassroomsModule,
     GroupsModule,
     EducatorProgramsModule,
+    EvaluationsModule,
   ],
 
   controllers: [AppController],
