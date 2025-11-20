@@ -5,8 +5,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Educator } from 'src/educators/entities/educator.entity';
-import { Program } from 'src/programs/entities/program.entity';
+import { Educator } from '../../educators/entities/educator.entity';
+import { Program } from '../../programs/entities/program.entity';
 
 @Entity('educator_programs')
 export class EducatorProgram {

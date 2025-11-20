@@ -6,6 +6,6 @@ import { EducatorProgramsService } from './educator_programs.service';
 @Module({
   imports: [TypeOrmModule.forFeature([EducatorProgram])],
   providers: [EducatorProgramsService],
-  exports: [EducatorProgramsService],
+  exports: [EducatorProgramsService, TypeOrmModule],
 })
 export class EducatorProgramsModule {}

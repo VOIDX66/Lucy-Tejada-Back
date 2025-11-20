@@ -18,6 +18,8 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { ProgramsService } from './programs.service';
 import { CreateProgramDto } from './dto/createProgram.dto';
@@ -25,12 +27,23 @@ import { UpdateProgramDto } from './dto/updateProgram.dto';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
 import { CurrentUser } from '../auth/decorators/currentUser.decorator';
 import { JwtPayloadDto } from '../auth/dto/jwtPayload.dto';
+import { GenerateGroupsDto } from './dto/generateGroups.dto';
+import { GroupsService } from '../groups/groups.service';
+import { SchedulingService } from 'src/scheduling/scheduling.service';
 import type { Request } from 'express';
+
+export interface RequestWithUser extends Request {
+  user: JwtPayloadDto;
+}
 
 @ApiTags('Programs')
 @Controller('programs')
 export class ProgramsController {
-  constructor(private readonly programsService: ProgramsService) {}
+  constructor(
+    private readonly programsService: ProgramsService,
+    private readonly groupsService: GroupsService,
+    private readonly schedulingService: SchedulingService,
+  ) {}
 
   // ===========================================
   // CREATE
@@ -199,5 +212,76 @@ export class ProgramsController {
       : forwardedFor || req.ip || 'unknown';
 
     await this.programsService.remove(id, user.sub, ipAddress);
+  }
+
+  // ===========================================
+  // Generate Groups
+  // ===========================================
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(':programId/generate_groups')
+  @ApiOperation({ summary: 'Generar grupos automáticamente para un programa' })
+  @ApiBody({ type: GenerateGroupsDto })
+  @ApiResponse({ status: 200, description: 'Grupos generados correctamente' })
+  @ApiResponse({ status: 400, description: 'Error en la generación' })
+  @ApiResponse({ status: 403, description: 'Permisos insuficientes' })
+  async generateGroups(
+    @Param('programId', ParseUUIDPipe) programId: string,
+    @Body() dto: GenerateGroupsDto,
+    @CurrentUser() user: JwtPayloadDto,
+    @Req() req: Request,
+  ) {
+    // solo ADMIN por ahora (o cambiar según roles)
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException('No tienes permisos para generar grupos');
+    }
+
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ipAddress = Array.isArray(forwardedFor)
+      ? forwardedFor[0]
+      : forwardedFor || req.ip || 'unknown';
+
+    return this.groupsService.createGroupsForProgram(
+      programId,
+      user.sub,
+      ipAddress,
+      {
+        groupCapacity: dto.groupCapacity,
+        namePrefix: dto.namePrefix,
+      },
+    );
+  }
+
+  // ===========================================
+  // get Enrollments Count
+  // ===========================================
+
+  @Get(':programId/enrollments/count')
+  @ApiOperation({
+    summary: 'Obtiene la cantidad de inscripciones de un programa',
+    description:
+      'Devuelve el número total de estudiantes inscritos en el programa, separado por estado (ACTIVE, COMPLETED, CANCELLED).',
+  })
+  @ApiParam({
+    name: 'programId',
+    description: 'UUID del programa',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiOkResponse({
+    description: 'Conteo de inscripciones del programa',
+    schema: {
+      example: {
+        programId: 'd47c627f-d2dd-4e02-8ccf-387b2405a912',
+        totalEnrollments: 41,
+        activeEnrollments: 39,
+        completedEnrollments: 2,
+        cancelledEnrollments: 0,
+      },
+    },
+  })
+  async getEnrollmentCount(@Param('programId') programId: string) {
+    return this.programsService.getEnrollmentCount(programId);
   }
 }

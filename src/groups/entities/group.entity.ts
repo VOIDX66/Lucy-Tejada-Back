@@ -9,7 +9,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { Program } from '../../programs/entities/program.entity';
 import { Educator } from '../../educators/entities/educator.entity';
-import { GroupSchedule } from '../../scheduling/entites/groupSchedule.entity';
+import { GroupSchedule } from '../../scheduling/entities/groupSchedule.entity';
 import { Attendance } from '../../attendances/entities/attendance.entity';
 import { Evaluation } from '../../evaluations/entities/evaluation.entity';
 
@@ -28,6 +28,9 @@ export class Group {
   })
   @Column({ name: 'group_name', type: 'varchar', length: 100 })
   groupName: string;
+
+  @Column({ type: 'int', default: 25 })
+  capacity: number;
 
   // -------------------------------------------------------------------------
   // RELACIÓN CON PROGRAM
@@ -56,13 +59,14 @@ export class Group {
     nullable: true,
   })
   @Column({ name: 'educator_id', type: 'uuid', nullable: true })
-  educatorId?: string;
+  educatorId?: string | null;
 
   @ManyToOne(() => Educator, (educator) => educator.groups, {
+    nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'educator_id' })
-  educator?: Educator;
+  educator?: Educator | null;
 
   @OneToMany(() => GroupSchedule, (schedule) => schedule.group)
   schedules: GroupSchedule[];

@@ -12,6 +12,10 @@ import { CreateProgramDto } from './dto/createProgram.dto';
 import { UpdateProgramDto } from './dto/updateProgram.dto';
 import { AuditLogsService } from 'src/audit_logs/audit_logs.service';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
+import {
+  Enrollment,
+  EnrollmentStatus,
+} from '../enrollments/entities/enrollment.entity';
 
 @Injectable()
 export class ProgramsService {
@@ -19,6 +23,8 @@ export class ProgramsService {
     @InjectRepository(Program)
     private readonly repo: Repository<Program>,
     private readonly auditService: AuditLogsService,
+    @InjectRepository(Enrollment)
+    private readonly enrollmentRepo: Repository<Enrollment>,
   ) {}
 
   // ---------------------------------------------------------
@@ -269,5 +275,30 @@ export class ProgramsService {
       ipAddress,
       result: `Programa ${id} eliminado correctamente`,
     });
+  }
+
+  async getEnrollmentCount(programId: string) {
+    const program = await this.repo.findOne({ where: { id: programId } });
+    if (!program) throw new NotFoundException('Programa no encontrado');
+
+    const active = await this.enrollmentRepo.count({
+      where: { program: { id: programId }, status: EnrollmentStatus.ACTIVE },
+    });
+
+    const completed = await this.enrollmentRepo.count({
+      where: { program: { id: programId }, status: EnrollmentStatus.COMPLETED },
+    });
+
+    const cancelled = await this.enrollmentRepo.count({
+      where: { program: { id: programId }, status: EnrollmentStatus.CANCELLED },
+    });
+
+    return {
+      programId,
+      totalEnrollments: active + completed + cancelled,
+      activeEnrollments: active,
+      completedEnrollments: completed,
+      cancelledEnrollments: cancelled,
+    };
   }
 }
